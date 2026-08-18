@@ -26,17 +26,17 @@ A simple, interactive CLI-based AI chat agent using OpenAI-compatible APIs. This
 ### 2. Configure API Access
 
 - Copy the example configuration file:
-  ```bash
+```bash
   cp config.json.example config.json
-  ```
+```
 - Edit `config.json` and add your API key, base URL, and model:
-  ```json
+```json
   {
     "api_key": "YOUR_API_KEY",
     "base_url": "YOUR_BASE_URL",
     "model": "YOUR_MODEL"
   }
-  ```
+```
 
 ### 3. Install Dependencies
 
@@ -76,7 +76,7 @@ You -> Hello
 Diana:  
 Hi! How can I help you today?                                                                                                                                          
 
-Tokens: 97 | Session: Not developed yet.
+Tokens: 97
 You -> What can you do?
 
 Diana:  
