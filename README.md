@@ -9,6 +9,7 @@ A simple, interactive CLI-based AI chat agent using OpenAI-compatible APIs. This
 - Interactive chat with **Markdown rendering** for better readability.
 - **Token usage tracking** to monitor API consumption.
 - **Save conversations** to text files for later reference.
+- **Session statistics** (messages, tokens, duration).
 - **Cross-platform** (Windows, Linux, macOS).
 - **Minimal dependencies** for easy setup.
 
@@ -56,12 +57,14 @@ python agent.py
 
 ### Commands
 
-| Command  | Description                                    |
-|----------|------------------------------------------------|
-| `/exit`  | Quit the agent.                                |
-| `/new`   | Start a new session and clear the conversation.|
-| `/save`  | Save the conversation to a text file.          |
-| `/help`  | Display available commands (coming soon!).     |
+| Command   | Description                                    |
+|-----------|------------------------------------------------|
+| `/exit`   | Quit the agent.                                |
+| `/new`    | Start a new session.                           |
+| `/clear`  | Clear the terminal and start a new session.    |
+| `/save`   | Save the conversation to a text file.          |
+| `/help`   | Display available commands.                    |
+| `/stats`  | Show conversation statistics.                  |
 
 ### Example Session
 
@@ -74,25 +77,24 @@ Tokens: 0
 You -> Hello
 
 Diana:  
-Hi! How can I help you today?                                                                                                                                          
+Hi! How can I help you today?                                                                                                                                           
 
 Tokens: 97
 You -> What can you do?
 
 Diana:  
-I can help with a lot of things, like:                                                                                                                                 
+I can help with a lot of things, like:                                                                                                                                  
 
- • Answering questions and explaining concepts                                                                                                                         
- • Writing, editing, and brainstorming                                                                                                                                 
- • Helping with coding or technical problems                                                                                                                           
- • Planning, organizing, and summarizing info                                                                                                                          
- • Giving recommendations or walking through decisions                                                                                                                 
+ • Answering questions and explaining concepts                                                                                                                          
+ • Writing, editing, and brainstorming                                                                                                                                  
+ • Helping with coding or technical problems                                                                                                                            
+ • Planning, organizing, and summarizing info                                                                                                                           
+ • Giving recommendations or walking through decisions                                                                                                                  
 
-Basically, if it involves thinking, writing, or figuring something out, just ask.                                                                                      
+Basically, if it involves thinking, writing, or figuring something out, just ask.                                                                                       
 
 Tokens: 337
 You -> 
-
 ```
 
 ---
