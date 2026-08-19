@@ -1,4 +1,4 @@
-# AI Agent CLI
+# Diana Agent
 
 A simple, interactive CLI-based AI chat agent using OpenAI-compatible APIs. This project allows you to chat with an AI assistant directly from your terminal, track token usage, and save conversations.
 
@@ -10,6 +10,7 @@ A simple, interactive CLI-based AI chat agent using OpenAI-compatible APIs. This
 - **Token usage tracking** to monitor API consumption.
 - **Save conversations** to text files for later reference.
 - **Session statistics** (messages, tokens, duration).
+- **Session tracking** (save/load sessions with `/sessions`).
 - **Cross-platform** (Windows, Linux, macOS).
 - **Minimal dependencies** for easy setup.
 
@@ -57,14 +58,15 @@ python agent.py
 
 ### Commands
 
-| Command   | Description                                    |
-|-----------|------------------------------------------------|
-| `/exit`   | Quit the agent.                                |
-| `/new`    | Start a new session.                           |
-| `/clear`  | Clear the terminal and start a new session.    |
-| `/save`   | Save the conversation to a text file.          |
-| `/help`   | Display available commands.                    |
-| `/stats`  | Show conversation statistics.                  |
+| Command     | Description                                    |
+|------------|------------------------------------------------|
+| `/exit`     | Quit the agent.                                |
+| `/new`      | Start a new session.                           |
+| `/clear`    | Clear the terminal and start a new session.    |
+| `/save`     | Save the conversation to a text file.          |
+| `/help`     | Display available commands.                    |
+| `/stats`    | Show conversation statistics.                  |
+| `/sessions` | List and load previous sessions.               |
 
 ### Example Session
 
@@ -73,28 +75,29 @@ Welcome to this AI Agent.
 Type /exit to quit.
 
 
-Tokens: 0
-You -> Hello
+Tokens: 0 | diana_20260819_o4e6y2k7i4r3 | tencent-hy3-free
+You -> Hello there 
 
 Diana:  
-Hi! How can I help you today?                                                                                                                                           
+Hi! How can I help you today?                                                                                                                                          
 
-Tokens: 97
-You -> What can you do?
+Tokens: 105 | diana_20260819_o4e6y2k7i4r3 | tencent-hy3-free
+You -> What can you do?         
 
 Diana:  
-I can help with a lot of things, like:                                                                                                                                  
+I can help with a wide range of things, like:                                                                                                                          
 
- • Answering questions and explaining concepts                                                                                                                          
- • Writing, editing, and brainstorming                                                                                                                                  
- • Helping with coding or technical problems                                                                                                                            
- • Planning, organizing, and summarizing info                                                                                                                           
- • Giving recommendations or walking through decisions                                                                                                                  
+ • Answering questions and explaining concepts                                                                                                                         
+ • Writing, editing, or brainstorming content                                                                                                                          
+ • Summarizing text or articles                                                                                                                                        
+ • Helping with code or technical problems                                                                                                                             
+ • Planning, organizing, or decision-making                                                                                                                            
+ • Casual conversation or recommendations                                                                                                                              
 
-Basically, if it involves thinking, writing, or figuring something out, just ask.                                                                                       
+What do you need a hand with?                                                                                                                                          
 
-Tokens: 337
-You -> 
+Tokens: 337 | diana_20260819_o4e6y2k7i4r3 | tencent-hy3-free
+You ->  
 ```
 
 ---

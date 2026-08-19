@@ -3,3 +3,5 @@ chat_*.txt
 __pycache__/
 *.py[cod]
 .venv/
+sessions/
+sessions/*
