@@ -5,7 +5,7 @@ import sys
 import random
 import string
 from openai import OpenAI
-from os import system, makedirs, listdir
+import os
 from sys import platform
 from colorama import Fore, init, Style
 from rich.console import Console
@@ -18,30 +18,33 @@ token_tracking = 0
 start_time = datetime.datetime.now()
 texts = []
 session_id = f"diana_{datetime.datetime.now().strftime('%Y%m%d')}_{''.join(random.choice(string.ascii_lowercase) + random.choice(string.digits) for _ in range(6))}"
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 SYSTEM_PROMPT = (
     "Your name is Diana. Be helpful, concise, and natural. "
     "Never state your name in every response — only mention it if asked directly."
 )
 
+
 def save_session():
-    makedirs("sessions", exist_ok=True)
-    with open(f"sessions/{session_id}.json", 'w', encoding='utf-8') as f:
-        session = {
-                'session_id': session_id,
-                'created_at': datetime.datetime.now().strftime("%Y%m%d_%H%M%S"),
-                'model': config['model'],
-                'messages': conv_history,
-                'tokens': token_tracking
-                }
-        json.dump(session, f)
+    if len(conv_history) > 1:
+        os.makedirs(os.path.join(BASE_DIR, "sessions"), exist_ok=True)
+        with open(f"{os.path.join(BASE_DIR, 'sessions', session_id)}.json", 'w', encoding='utf-8') as f:
+            session = {
+                    'session_id': session_id,
+                    'created_at': datetime.datetime.now().strftime("%Y%m%d_%H%M%S"),
+                    'model': config['model'],
+                    'messages': conv_history,
+                    'tokens': token_tracking
+                    }
+            json.dump(session, f)
 
 
 try:
-    with open('config.json', 'r', encoding='utf-8') as f:
+    with open(os.path.join(BASE_DIR, 'config.json'), 'r', encoding='utf-8') as f:
         config = json.load(f)
 
 except FileNotFoundError:
-    with open('config.json', 'w', encoding='utf-8') as f:
+    with open(os.path.join(BASE_DIR, 'config.json'), 'w', encoding='utf-8') as f:
         base_url = input("Enter Provider Base URL: ")
         api_key = getpass.getpass("Enter API Key: ")
         model = input("Enter Model: ")
@@ -88,6 +91,7 @@ while True:
         break
 
     elif text == "/clear":
+        save_session()
         conv_history = [{"role": "system", "content" : SYSTEM_PROMPT}]
         print("\nConversation Cleared")
 
@@ -96,14 +100,15 @@ while True:
         session_id = f"diana_{datetime.datetime.now().strftime('%Y%m%d')}_{''.join(random.choice(string.ascii_lowercase) + random.choice(string.digits) for _ in range(6))}"
 
         if platform == "win32":
-            system("cls")
+            os.system("cls")
 
         else:
-            system("clear")
+            os.system("clear")
 
         continue
 
     elif text == "/new":
+        save_session()
         conv_history = [{"role": "system", "content" : SYSTEM_PROMPT}]
         print("\nNew Session Started")
 
@@ -115,7 +120,8 @@ while True:
 
     elif text == "/save":
         conversation_file = f"chat_{datetime.datetime.now().strftime('%Y%m%d_%H%M%S')}.txt"
-        with open(conversation_file, "w", encoding='utf-8') as f:
+        os.makedirs(os.path.join(BASE_DIR, 'chats'), exist_ok=True)
+        with open(os.path.join(BASE_DIR, 'chats', conversation_file), "w", encoding='utf-8') as f:
             for msg in conv_history:
                 if msg['role'] != 'system':
                     f.write(f"{'Diana' if msg['role'] == 'assistant' else 'You'} : {msg['content']}\n")
@@ -129,7 +135,7 @@ while True:
 
     elif text == "/sessions":
         try:
-            sessions = listdir("sessions") # if you change the directory all the config.json and everything will be gone
+            sessions = os.listdir(os.path.join(BASE_DIR, "sessions"))
             counter = 1
             session_files = []
             for session in sessions:
@@ -138,20 +144,48 @@ while True:
                     print(f"{counter} - {session[:-5]}")
                     counter += 1
 
-            session_choose = input("Enter a Session or 0 to continue: ") # check if user worte the session id, should be accepted
+            if session_files == []:
+                print("No saved sessions yet.")
+                continue
+
+            session_choose = input("Enter a Session or 0 to continue: ")
             if session_choose == '0':
                 continue
-            else:
-                with open(f'sessions/{session_files[int(session_choose) - 1]}') as f:
+
+            elif session_choose.isdigit() and int(session_choose) <= len(session_files):
+                with open(os.path.join(BASE_DIR, 'sessions', session_files[int(session_choose) - 1])) as f:
                     session_load = json.load(f)
                     print(f"\n{'-' * 10} Messages {'-' * 10}\n")
                     for msg in session_load['messages']:
                         if msg['role'] != 'system':
                             print(f"{'Diana' if msg['role'] == 'assistant' else 'You'} : {msg['content']}\n") # use rich.Markdown to print
-                    continue # it should change the session 
+                    save_session()
+                    session_id = session_load['session_id']
+                    conv_history = session_load['messages']
+                    token_tracking = session_load['tokens']
+                    start_time = datetime.datetime.now()
+
+                continue
+
+            else:
+                for session in session_files:
+                    if session_choose == session[:-5]:
+                        with open(os.path.join(BASE_DIR, 'sessions', session)) as f:
+                            session_load = json.load(f)
+                            print(f"\n{'-' * 10} Messages {'-' * 10}\n")
+                            for msg in session_load['messages']:
+                                if msg['role'] != 'system':
+                                    print(f"{'Diana' if msg['role'] == 'assistant' else 'You'} : {msg['content']}\n") # use rich.Markdown to print
+                            save_session()
+                            session_id = session_load['session_id']
+                            conv_history = session_load['messages']
+                            token_tracking = session_load['tokens']
+                            start_time = datetime.datetime.now()
+
+                continue
 
         except Exception as e:
-            print(f"Error: {e}") # there is lots of mistakes in this error handling, code a better one
+            print(f"Error: {e}")
             continue
 
 

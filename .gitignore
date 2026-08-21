@@ -5,3 +5,6 @@ __pycache__/
 .venv/
 sessions/
 sessions/*
+sessions.bak/
+sessions.bak/*
+
