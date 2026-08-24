@@ -10,6 +10,7 @@ from sys import platform
 from colorama import Fore, init, Style
 from rich.console import Console
 from rich.markdown import Markdown
+from rich.live import Live
 
 
 init()
@@ -37,6 +38,19 @@ def save_session():
                     'tokens': token_tracking
                     }
             json.dump(session, f)
+
+def load_sessions(f):
+    session_load = json.load(f)
+    print(f"\n{'-' * 10} Messages {'-' * 10}\n")
+    for msg in session_load['messages']:
+        if msg['role'] != 'system':
+            print(f"{'Diana' if msg['role'] == 'assistant' else 'You'} : {msg['content']}\n") # use rich.Markdown to print
+    return {
+            'session_id': session_load['session_id'],
+            'messages': session_load['messages'],
+            'tokens': session_load['tokens'] or 0
+            }
+
 
 
 try:
@@ -88,24 +102,7 @@ while True:
     if text == "/exit":
         save_session()
         print("\nGoodbye")
-        break
-
-    elif text == "/clear":
-        save_session()
-        conv_history = [{"role": "system", "content" : SYSTEM_PROMPT}]
-        print("\nConversation Cleared")
-
-        token_tracking = 0
-        start_time = datetime.datetime.now()
-        session_id = f"diana_{datetime.datetime.now().strftime('%Y%m%d')}_{''.join(random.choice(string.ascii_lowercase) + random.choice(string.digits) for _ in range(6))}"
-
-        if platform == "win32":
-            os.system("cls")
-
-        else:
-            os.system("clear")
-
-        continue
+        sys.exit()
 
     elif text == "/new":
         save_session()
@@ -144,7 +141,7 @@ while True:
                     print(f"{counter} - {session[:-5]}")
                     counter += 1
 
-            if session_files == []:
+            if not session_files:
                 print("No saved sessions yet.")
                 continue
 
@@ -154,33 +151,32 @@ while True:
 
             elif session_choose.isdigit() and int(session_choose) <= len(session_files):
                 with open(os.path.join(BASE_DIR, 'sessions', session_files[int(session_choose) - 1])) as f:
-                    session_load = json.load(f)
-                    print(f"\n{'-' * 10} Messages {'-' * 10}\n")
-                    for msg in session_load['messages']:
-                        if msg['role'] != 'system':
-                            print(f"{'Diana' if msg['role'] == 'assistant' else 'You'} : {msg['content']}\n") # use rich.Markdown to print
-                    save_session()
-                    session_id = session_load['session_id']
-                    conv_history = session_load['messages']
-                    token_tracking = session_load['tokens']
-                    start_time = datetime.datetime.now()
+                    loaded = load_sessions(f)
+                save_session()
+                session_id = loaded['session_id']
+                conv_history = loaded['messages']
+                token_tracking = loaded['tokens']
+                start_time = datetime.datetime.now()
+                continue
 
+            elif session_choose.isdigit() and int(session_choose) > len(session_files):
+                print(f"You should pick a number between 0 and {len(session_files)}")
                 continue
 
             else:
+                matched = False
                 for session in session_files:
                     if session_choose == session[:-5]:
+                        matched = True
                         with open(os.path.join(BASE_DIR, 'sessions', session)) as f:
-                            session_load = json.load(f)
-                            print(f"\n{'-' * 10} Messages {'-' * 10}\n")
-                            for msg in session_load['messages']:
-                                if msg['role'] != 'system':
-                                    print(f"{'Diana' if msg['role'] == 'assistant' else 'You'} : {msg['content']}\n") # use rich.Markdown to print
-                            save_session()
-                            session_id = session_load['session_id']
-                            conv_history = session_load['messages']
-                            token_tracking = session_load['tokens']
-                            start_time = datetime.datetime.now()
+                            loaded = load_sessions(f)
+                        save_session()
+                        session_id = loaded['session_id']
+                        conv_history = loaded['messages']
+                        token_tracking = loaded['tokens']
+                        start_time = datetime.datetime.now()
+                if not matched:
+                    print(f"Session {session_choose} not found.")
 
                 continue
 
@@ -191,7 +187,7 @@ while True:
 
 
     elif text == "/help":
-        help_text = "\n**Available Commands:**\n- `/exit` - Exit the program\n- `/new` - To start a new session\n- `/clear` - Starts a new session and clear the terminal\n- `/save` - Save the current conversation to a text file\n- `/stats` - Show conversation statistics\n- `/help` - Show the available commands\n"
+        help_text = "\n**Available Commands:**\n- `/exit` - Exit the program\n- `/new` - To start a new session\n- `/save` - Save the current conversation to a text file\n- `/stats` - Show conversation statistics\n- `/sessions` - List and load previous sessions\n- `/help` - Show the available commands\n"
         console.print(Markdown(help_text))
         continue
 
@@ -215,22 +211,34 @@ while True:
 
 
     try:
-        response = client.chat.completions.create(
+        stream = client.chat.completions.create(
             model=config['model'],
             messages=texts,
-            temperature=0.2
+            temperature=0.2,
+            stream=True,
+            stream_options={'include_usage': True}
         )
         
-        if response.usage:
-            token_tracking += response.usage.total_tokens or 0
+        assistant_reply = ""
 
-        assistant_reply = response.choices[0].message.content
-        
+        print(f"\n{Fore.YELLOW}Diana:  {Style.RESET_ALL}")
+        with Live(Markdown(""), console=console, refresh_per_second=10) as live:
+            for chunk in stream:
+                if getattr(chunk, 'usage', None):
+                    token_tracking += chunk.usage.total_tokens or 0 
+
+                if not chunk.choices:
+                    continue
+
+                delta = chunk.choices[0].delta
+                if delta.content:
+                    assistant_reply += delta.content
+                    live.update(Markdown(assistant_reply))
+        print()
+
         conv_history.append({"role": "assistant", "content": assistant_reply})
 
 
-        print(f"\n{Fore.YELLOW}Diana:  {Style.RESET_ALL}")
-        console.print(Markdown(assistant_reply))
 
     except Exception as e:
         print(f"Something went wrong: {e}")

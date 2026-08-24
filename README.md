@@ -6,7 +6,7 @@ A simple, interactive CLI-based AI chat agent using OpenAI-compatible APIs. This
 
 ## Features
 
-- Interactive chat with **Markdown rendering** for better readability.
+- Interactive chat with **live-streamed responses** rendered as **Markdown**.
 - **Token usage tracking** to monitor API consumption.
 - **Save conversations** to text files for later reference.
 - **Session statistics** (messages, tokens, duration).
@@ -62,7 +62,6 @@ python agent.py
 |------------|------------------------------------------------|
 | `/exit`     | Quit the agent.                                |
 | `/new`      | Start a new session.                           |
-| `/clear`    | Clear the terminal and start a new session.    |
 | `/save`     | Save the conversation to a text file.          |
 | `/help`     | Display available commands.                    |
 | `/stats`    | Show conversation statistics.                  |
