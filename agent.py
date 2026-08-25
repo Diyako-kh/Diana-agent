@@ -1,11 +1,13 @@
 import json
 import datetime
+import time
 import getpass
 import sys
 import random
 import string
-from openai import OpenAI
 import os
+import openai
+from openai import OpenAI
 from sys import platform
 from colorama import Fore, init, Style
 from rich.console import Console
@@ -44,7 +46,7 @@ def load_sessions(f):
     print(f"\n{'-' * 10} Messages {'-' * 10}\n")
     for msg in session_load['messages']:
         if msg['role'] != 'system':
-            print(f"{'Diana' if msg['role'] == 'assistant' else 'You'} : {msg['content']}\n") # use rich.Markdown to print
+            console.print(Markdown(f"{'Diana' if msg['role'] == 'assistant' else 'You'} : {msg['content']}\n"))
     return {
             'session_id': session_load['session_id'],
             'messages': session_load['messages'],
@@ -210,39 +212,66 @@ while True:
         texts = conv_history.copy()
 
 
+    reply_ok = False
     try:
-        stream = client.chat.completions.create(
-            model=config['model'],
-            messages=texts,
-            temperature=0.2,
-            stream=True,
-            stream_options={'include_usage': True}
-        )
-        
-        assistant_reply = ""
+        stream = None
+        for attempt in range(3):
+            try:
+                stream = client.chat.completions.create(
+                    model=config['model'],
+                    messages=texts,
+                    temperature=0.2,
+                    stream=True,
+                    stream_options={'include_usage': True}
+                )
+                break
 
-        print(f"\n{Fore.YELLOW}Diana:  {Style.RESET_ALL}")
-        with Live(Markdown(""), console=console, refresh_per_second=10) as live:
-            for chunk in stream:
-                if getattr(chunk, 'usage', None):
-                    token_tracking += chunk.usage.total_tokens or 0 
+            except openai.RateLimitError:
+                if attempt == 2:
+                    print("Rate Limited by Provider, Try Again Later... ")
+                else:
+                    delay = 2 * (2 ** attempt)
+                    print(f"Rate Limited by Provider, Retrying in {delay}s...")
+                    time.sleep(delay)
 
-                if not chunk.choices:
-                    continue
+        if stream is not None:
+            assistant_reply = ""
 
-                delta = chunk.choices[0].delta
-                if delta.content:
-                    assistant_reply += delta.content
-                    live.update(Markdown(assistant_reply))
-        print()
+            print(f"\n{Fore.YELLOW}Diana:  {Style.RESET_ALL}")
+            with Live(Markdown(""), console=console, refresh_per_second=10) as live:
+                for chunk in stream:
+                    if getattr(chunk, 'usage', None):
+                        token_tracking += chunk.usage.total_tokens or 0
 
-        conv_history.append({"role": "assistant", "content": assistant_reply})
+                    if not chunk.choices:
+                        continue
 
+                    delta = chunk.choices[0].delta
+                    if delta.content:
+                        assistant_reply += delta.content
+                        live.update(Markdown(assistant_reply))
+            print()
 
+            conv_history.append({"role": "assistant", "content": assistant_reply})
+            reply_ok = True
+
+    except openai.RateLimitError:
+        print("Rate Limited by Provider, Try Again Later... ")
+
+    except openai.AuthenticationError:
+        print("Bad API Key")
+
+    except openai.PermissionDeniedError:
+        print("No Access to Model")
+
+    except openai.APIConnectionError:
+        print("Can't Reach The Provider")
+
+    except openai.APIStatusError as e:
+        print(f"HTTP Error : {e}")
 
     except Exception as e:
         print(f"Something went wrong: {e}")
-        if conv_history[-1]['role'] == 'user':
-            conv_history.pop()
 
-        continue
+    if not reply_ok and conv_history[-1]['role'] == 'user':
+        conv_history.pop()
